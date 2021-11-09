@@ -14,7 +14,7 @@ def immediate_charging(
     :param int veh_range: 100, 200, or 300, represents how far vehicle can travel on single charge.
     :param int kwhmi: fuel efficiency, should vary based on vehicle type and model_year.
     :param int power: charger power, EVSE kW.
-    :param int location_strategy: where the vehicle can charge-1, 2, 3, 4, or 5; 1-home only, 2-home and work related, 3-anywhere if possibile, 4-home and school only, 5-home and work and school.
+    :param int location_strategy: where the vehicle can charge-1, 2, 3; 1-home only, 2-home and work related, 3-anywhere if possible
     :return: (*numpy.ndarray*) -- charging profiles.
     """
     # load NHTS data from function
@@ -38,18 +38,12 @@ def immediate_charging(
     actual_vmt = 0
     potential_vmt = 0
 
-    # 1-anytrip number, 2-last trip
-    trip_strategy = 1
-
     kwh = kwhmi * veh_range
 
     for day_iter in range(len(input_day)):
 
         electricload = np.zeros(4800)
         # initializes electricload_old
-
-        # vmt, trip amount, vehicle amount
-        info1 = [0] * 3
 
         # meh: better names for counters
         trip_num = 1  # trip number for current vehicle
@@ -90,7 +84,7 @@ def immediate_charging(
                         newdata.iloc[i, newdata.columns.get_loc("trip start battery charge")]
                         - newdata.iloc[i, newdata.columns.get_loc("Miles traveled")] * kwhmi * const.ER
                     )
-                    """maybe unnecesesarry
+                    """maybe unnecessary
                     # period when battery is discharging. depleting time
                     newdata.iloc[i, newdata.columns.get_loc("depleting time")] = newdata.iloc[i, 
                         newdata.columns.get_loc("Travel time (hour decimal)")
@@ -127,12 +121,6 @@ def immediate_charging(
                 end_point = start_point + round(newdata.iloc[i, newdata.columns.get_loc("charging time")] * 100)
                 electricload[start_point:end_point] += newdata.iloc[i, newdata.columns.get_loc("charging power")]
 
-                info1[0] += newdata.iloc[i, newdata.columns.get_loc("Miles traveled")]
-                info1[1] += 1
-
-                if firstrip != 0:
-                    info1[2] += 1
-
             if newdata.iloc[i, newdata.columns.get_loc("BEV could be used")] == 1:
                 actual_vmt += newdata.iloc[i, newdata.columns.get_loc("Miles traveled")]
 
@@ -156,14 +144,16 @@ def immediate_charging(
 
         # only used as "test" output variables
         # output_load.append(outputelectricload)
-        # info_out.append(info1)
 
         if day_iter == len(input_day) - 1:
             # MW
-            TRANS_charge[day_iter * 24:] += outputelectricload[:24] / (info1[0] * 1000)
-            TRANS_charge[:24] += outputelectricload[24:48] / (info1[0] * 1000)
+            TRANS_charge[day_iter * 24:] += outputelectricload[:24]
+            TRANS_charge[:24] += outputelectricload[24:48]
         else:
-            TRANS_charge[day_iter * 24 : day_iter * 24 + 48] += outputelectricload / (info1[0] * 1000)
+            TRANS_charge[day_iter * 24 : day_iter * 24 + 48] += outputelectricload
+            
+        #kef: need to add trans_charge normalization calculation, is the following written correctly?
+        TRANS_charge =  TRANS_charge / sum(TRANS_charge)
 
     return TRANS_charge
 
