@@ -60,35 +60,6 @@ def get_location(location_strategy, dwell_location):
     elif location_strategy == 3:
         return True
     
-    #home and school only
-    elif location_strategy == 4:
-        #21 is 'go to school as student'
-        return dwell_location in {1, 21}
-
-    #home and work and school
-    elif location_strategy == 5:
-        if dwell_location in {1, 11, 12, 21}:
-            return True
-        else:
-            return False
-
-
-#consider trip number
-def consider_trip_number(trip_strategy, total_trips, trip_num):
-    """Determines if the vehicle should charge given trip strategy and current trip
-    
-    :param int trip_strategy: a toggle that determines if should charge on any trip or only after last trip (1-anytrip number, 2-last trip)
-    :param int total_trips: total trips that the vehicle makes
-    :param int trip_num: the trip number of the current trip
-    :return: (*bool*) -- boolean that represents if the vehicle should charge
-    """
-    if trip_strategy == 1:
-        return True
-    
-    elif trip_strategy == 2:
-        return total_trips == trip_num
-         
-
 #consider battery SOC
 def get_battery_SOC(battery_SOC, kwh):
     """Determines if the vehicle needs to charge
